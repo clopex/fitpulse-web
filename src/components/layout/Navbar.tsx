@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Dumbbell, Moon, Sun, LogOut, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth.store';
 import { useThemeStore } from '@/store/theme.store';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,12 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
   const handleLogout = () => { logout(); router.push('/'); };
+  const showAuth = mounted && isAuthenticated;
 
   return (
     <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
@@ -32,7 +37,7 @@ export function Navbar() {
           <span className="font-bold text-lg">FitPulse</span>
         </Link>
         <div className="hidden md:flex items-center gap-1">
-          {isAuthenticated && navLinks.map(({ href, label }) => (
+          {showAuth && navLinks.map(({ href, label }) => (
             <Link key={href} href={href} className={cn(
               'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               pathname === href ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -43,7 +48,7 @@ export function Navbar() {
           <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-accent transition-colors">
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          {isAuthenticated ? (
+          {showAuth ? (
             <div className="hidden md:flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                 {user?.name?.[0]?.toUpperCase() ?? 'U'}
@@ -52,12 +57,12 @@ export function Navbar() {
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
-          ) : (
+          ) : mounted ? (
             <div className="hidden md:flex items-center gap-2">
               <Link href="/login" className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent transition-colors">Login</Link>
               <Link href="/register" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Sign up</Link>
             </div>
-          )}
+          ) : null}
           <button onClick={() => setOpen(!open)} className="md:hidden p-2 rounded-lg hover:bg-accent transition-colors">
             {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -65,13 +70,13 @@ export function Navbar() {
       </div>
       {open && (
         <div className="md:hidden border-t border-border bg-card px-4 py-3 space-y-1">
-          {isAuthenticated && navLinks.map(({ href, label }) => (
+          {showAuth && navLinks.map(({ href, label }) => (
             <Link key={href} href={href} onClick={() => setOpen(false)} className={cn(
               'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               pathname === href ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
             )}>{label}</Link>
           ))}
-          {isAuthenticated
+          {showAuth
             ? <button onClick={handleLogout} className="w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent">Logout</button>
             : <>
                 <Link href="/login" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent">Login</Link>

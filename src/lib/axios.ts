@@ -10,8 +10,9 @@ api.interceptors.request.use((config) => {
     try {
       const raw = localStorage.getItem('fitpulse-auth');
       if (raw) {
-        const { state } = JSON.parse(raw);
-        if (state?.token) config.headers.Authorization = `Bearer ${state.token}`;
+        const parsed = JSON.parse(raw);
+        const token = parsed?.state?.token;
+        if (token) config.headers.Authorization = `Bearer ${token}`;
       }
     } catch {}
   }

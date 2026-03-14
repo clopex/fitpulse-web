@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getClassesApi, bookClassApi } from '@/api/classes.api';
 import { useAuthStore } from '@/store/auth.store';
 import { Calendar, Clock, Users, MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function ClassesPage() {
   const [page, setPage] = useState(1);
@@ -12,13 +13,26 @@ export default function ClassesPage() {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ['classes', page], queryFn: () => getClassesApi(page, 12) });
-  const bookMutation = useMutation({
-    mutationFn: (class_id: string) => bookClassApi(class_id),
-    onSuccess: (_, class_id) => {
-      setBooked(prev => [...prev, class_id]);
-      queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
-    },
-  });
+  const [bookingStates, setBookingStates] = useState<Record<string, 'idle' | 'loading' | 'booked' | 'error'>>({});
+  const router = useRouter();
+
+const handleBook = async (classId: string) => {
+  if (!isAuthenticated) {
+    router.push('/login');
+    return;
+  }
+  setBookingStates(prev => ({ ...prev, [classId]: 'loading' }));
+  try {
+    await bookClassApi(classId);
+    setBookingStates(prev => ({ ...prev, [classId]: 'booked' }));
+    queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+  } catch (err: any) {
+    setBookingStates(prev => ({ ...prev, [classId]: 'error' }));
+    const msg = err.response?.data?.message || 'Booking failed';
+    alert(msg);
+    setTimeout(() => setBookingStates(prev => ({ ...prev, [classId]: 'idle' })), 2000);
+  }
+};
 
   const classes    = data?.data?.data?.classes ?? [];
   const total      = data?.data?.data?.total ?? 0;
@@ -51,11 +65,16 @@ export default function ClassesPage() {
               {c.is_cancelled ? (
                 <span className="text-center py-2 rounded-lg text-sm bg-red-500/10 text-red-500">Cancelled</span>
               ) : isAuthenticated ? (
-                <button onClick={() => bookMutation.mutate(c.id)}
-                  disabled={booked.includes(c.id) || c.booked_count >= c.capacity}
-                  className="w-full py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 mt-auto">
-                  {booked.includes(c.id) ? '✓ Booked' : c.booked_count >= c.capacity ? 'Full' : 'Book Class'}
-                </button>
+                <button
+  onClick={() => handleBook(c.id)}
+  disabled={bookingStates[c.id] === 'loading' || bookingStates[c.id] === 'booked' || c.booked_count >= c.capacity}
+  className="w-full py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 mt-auto"
+>
+  {bookingStates[c.id] === 'loading' ? 'Booking...' :
+   bookingStates[c.id] === 'booked'  ? '✓ Booked'  :
+   bookingStates[c.id] === 'error'   ? 'Try again' :
+   c.booked_count >= c.capacity      ? 'Full'       : 'Book Class'}
+</button>
               ) : (
                 <a href="/login" className="block text-center py-2.5 rounded-lg text-sm font-medium border border-border hover:bg-accent transition-colors mt-auto">Login to Book</a>
               )}
