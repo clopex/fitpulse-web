@@ -9,17 +9,30 @@ import { Dumbbell, Calendar, Flame, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, hasHydrated, user } = useAuthStore();
   const router = useRouter();
-  useEffect(() => { if (!isAuthenticated) router.push('/login'); }, [isAuthenticated, router]);
+  useEffect(() => {
+    if (hasHydrated && !isAuthenticated) router.replace('/login');
+  }, [hasHydrated, isAuthenticated, router]);
 
-  const { data: bookingsData } = useQuery({ queryKey: ['my-bookings'], queryFn: getMyBookings, enabled: isAuthenticated });
-  const { data: workoutsData } = useQuery({ queryKey: ['my-workouts'], queryFn: () => getWorkoutsApi(1), enabled: isAuthenticated });
-  const { data: classesData  } = useQuery({ queryKey: ['classes-home'], queryFn: () => getClassesApi(1, 3), enabled: isAuthenticated });
+  const queriesEnabled = hasHydrated && isAuthenticated;
+  const { data: bookingsData } = useQuery({ queryKey: ['my-bookings'], queryFn: () => getMyBookings(), enabled: queriesEnabled });
+  const { data: workoutsData } = useQuery({ queryKey: ['my-workouts'], queryFn: () => getWorkoutsApi(1), enabled: queriesEnabled });
+  const { data: classesData  } = useQuery({ queryKey: ['classes-home'], queryFn: () => getClassesApi(1, 3), enabled: queriesEnabled });
 
   const bookings = bookingsData?.data?.data?.bookings ?? [];
-  const workouts = workoutsData?.data?.data ?? {};
+  const workouts = (workoutsData?.data?.data as any) ?? {};
   const classes  = classesData?.data?.data?.classes ?? [];
+
+  if (!hasHydrated || !isAuthenticated) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">

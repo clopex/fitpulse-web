@@ -17,7 +17,7 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const router   = useRouter();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -25,7 +25,7 @@ export function Navbar() {
   useEffect(() => setMounted(true), []);
 
   const handleLogout = () => { logout(); router.push('/'); };
-  const showAuth = mounted && isAuthenticated;
+  const showAuth = mounted && hasHydrated && isAuthenticated;
 
   return (
     <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
@@ -57,7 +57,7 @@ export function Navbar() {
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
-          ) : mounted ? (
+          ) : mounted && hasHydrated ? (
             <div className="hidden md:flex items-center gap-2">
               <Link href="/login" className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent transition-colors">Login</Link>
               <Link href="/register" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Sign up</Link>
@@ -78,10 +78,10 @@ export function Navbar() {
           ))}
           {showAuth
             ? <button onClick={handleLogout} className="w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent">Logout</button>
-            : <>
+            : mounted && hasHydrated ? <>
                 <Link href="/login" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent">Login</Link>
                 <Link href="/register" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-sm bg-primary text-primary-foreground">Sign up</Link>
-              </>
+              </> : null
           }
         </div>
       )}

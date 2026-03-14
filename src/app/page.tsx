@@ -1,5 +1,10 @@
+'use client';
+
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Dumbbell, Zap, Brain, Calendar, Star, ArrowRight, CheckCircle } from 'lucide-react';
+import { useAuthStore } from '@/store/auth.store';
 
 const features = [
   { icon: Calendar, title: 'Book Classes',   desc: 'Browse and book fitness classes with top trainers.' },
@@ -17,6 +22,25 @@ const plans: Plan[] = [
 ];
 
 export default function HomePage() {
+  const { isAuthenticated, hasHydrated } = useAuthStore();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated) router.replace('/dashboard');
+  }, [hasHydrated, isAuthenticated, router]);
+
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen">
+        <div className="max-w-6xl mx-auto px-4 py-24 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) return null;
+
   return (
     <div className="min-h-screen">
       <section className="max-w-6xl mx-auto px-4 py-24 text-center">
