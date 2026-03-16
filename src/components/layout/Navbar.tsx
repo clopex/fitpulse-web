@@ -12,6 +12,7 @@ const navLinks = [
   { href: '/classes',   label: 'Classes' },
   { href: '/workout',   label: 'Workouts' },
   { href: '/ai-chat',   label: 'AI Coach' },
+  { href: '/profile',   label: 'Profile' },
 ];
 
 export function Navbar() {
@@ -50,9 +51,12 @@ export function Navbar() {
           </button>
           {showAuth ? (
             <div className="hidden md:flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                {user?.name?.[0]?.toUpperCase() ?? 'U'}
-              </div>
+              <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-accent transition-colors">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                  {user?.name?.[0]?.toUpperCase() ?? 'U'}
+                </div>
+                <span className="text-sm font-medium">{user?.name ?? 'Profile'}</span>
+              </Link>
               <button onClick={handleLogout} className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground">
                 <LogOut className="w-4 h-4" />
               </button>
@@ -77,7 +81,9 @@ export function Navbar() {
             )}>{label}</Link>
           ))}
           {showAuth
-            ? <button onClick={handleLogout} className="w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent">Logout</button>
+            ? <>
+                <button onClick={handleLogout} className="w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent">Logout</button>
+              </>
             : mounted && hasHydrated ? <>
                 <Link href="/login" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent">Login</Link>
                 <Link href="/register" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-sm bg-primary text-primary-foreground">Sign up</Link>
